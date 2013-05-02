@@ -31,9 +31,11 @@ module Librarian
 
         def mod(name, options = {})
 
-          # assumes that all modulenames are of the form
-          # module_namespace/module_name
-          module_name = name.split('/', 2)[1]
+          # We get the last part of the module name
+          # For example:
+          #   puppetlabs/ntp  results in ntp 
+          #   ntp             results in ntp 
+          module_name = name.split('/', 2).last
 
           module_dir = File.join(module_path, module_name)
 
