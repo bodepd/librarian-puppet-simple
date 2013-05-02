@@ -18,8 +18,12 @@ module Librarian
 
         def module_path(dir=base_dir)
           unless @module_path
-            @module_path = File.join(dir, 'modules')
-            Dir.mkdir(File.join(dir, 'modules')) unless File.exists?(@module_path)
+            if @custom_module_path
+              @module_path = File.expand_path @custom_module_path
+            else
+              @module_path = File.join(dir, 'modules')
+            end
+            Dir.mkdir(@module_path) unless File.exists?(@module_path)
           end
           @module_path
         end
@@ -71,7 +75,6 @@ module Librarian
           module_name = name.split('/', 2).last
 
           module_dir = File.join(module_path, module_name)
-
           case
           when options[:git]
             Dir.chdir(module_path) do
