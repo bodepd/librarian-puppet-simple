@@ -1,4 +1,7 @@
 require 'fileutils'
+require 'rubygems/package'
+require 'zlib'
+require 'open-uri'
 # This is an extremely simple file that can consume
 # a Puppet file with git references
 #
@@ -29,8 +32,38 @@ module Librarian
           output
         end
 
-        def mod(name, options = {})
+        # un-gzips the given IO, returning the
+        # decompressed version as a StringIO
+        def ungzip(tarfile)
+          z = Zlib::GzipReader.new(tarfile)
+          unzipped = StringIO.new(z.read)
+          z.close
+          unzipped
+        end
 
+        # untars the given IO into the specified
+        # directory
+        def untar(io, destination)
+          tarfile_full_name = nil
+          Gem::Package::TarReader.new io do |tar|
+            tar.each do |tarfile|
+              tarfile_full_name ||= tarfile.full_name
+              destination_file = File.join destination, tarfile.full_name
+              if tarfile.directory?
+                FileUtils.mkdir_p destination_file
+              else
+                destination_directory = File.dirname(destination_file)
+                FileUtils.mkdir_p destination_directory unless File.directory?(destination_directory)
+                File.open destination_file, "wb" do |f|
+                  f.print tarfile.read
+                end
+              end
+            end
+          end
+          tarfile_full_name
+        end
+
+        def mod(name, options = {})   
           # We get the last part of the module name
           # For example:
           #   puppetlabs/ntp  results in ntp 
@@ -39,8 +72,8 @@ module Librarian
 
           module_dir = File.join(module_path, module_name)
 
-          if options[:git]
-
+          case
+          when options[:git]
             Dir.chdir(module_path) do
               puts "cloning #{options[:git]}" if @verbose
               system_cmd("git clone #{options[:git]} #{module_name}")
@@ -51,9 +84,22 @@ module Librarian
                 end
               end
             end
-
+          when options[:tarball]
+            remote_target = options[:tarball]
+            Dir.mktmpdir do |tmp|
+              local_target = File.join(tmp,"downloaded_module.tar.gz")
+              File.open(local_target, "w+b") do |saved_file|
+                open(remote_target, 'rb') do |read_file|
+                  saved_file.write(read_file.read)
+                end
+                saved_file.rewind
+                unzipped_target = ungzip(saved_file)
+                tarfile_full_name = untar(unzipped_target, module_path)
+                FileUtils.mv File.join(module_path, tarfile_full_name), File.join(module_path, module_name)
+              end
+            end
           else
-            abort('only the :git provider is currently supported')
+            abort('only the :git and :tarball provider are currently supported')
           end
 
         end
