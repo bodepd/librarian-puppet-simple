@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'thor'
+lib = File.expand_path('../../lib', __FILE__)
+$:.unshift(lib) unless $:.include?(lib)
+require 'librarian/puppet/simple/cli'
+
+Librarian::Puppet::Simple::CLI.bin!
