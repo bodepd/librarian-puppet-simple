@@ -1,10 +1,10 @@
 $:.push File.expand_path("../lib", __FILE__)
 
-require 'librarian/puppet/version'
+require 'librarian/puppet/simple/version'
 
 Gem::Specification.new do |s|
-  s.name = 'librarian-puppet-simple
-  s.version = '0.0.1'
+  s.name = 'librarian-puppet-simple'
+  s.version = Librarian::Puppet::Simple::VERSION
   s.platform = Gem::Platform::RUBY
   s.authors = ['Dan Bode']
   s.email = ['bodepd@gmail.com']
