@@ -5,13 +5,13 @@ This project was created out of my frustration with dependency management in lib
 This project just has fewer commands, but they should be compatible with the original librarian-puppet:
 
 ### Clean
-Remove the directory where the modules will be installed, by default it will use `./modules` but you can overide it by passing a `--path` option.
+Remove the directory where the modules will be installed, by default it will use `./modules` but you can override it by passing a `--path` option.
 ```
   librarian-puppet clean [--verbose] [--path]
 ```
 
 ### Install
-Iterates through your Puppetfile and installs git sources. Use the `--clean` option to remove the directory and the `--path` option to overide the default `./modules`.
+Iterates through your Puppetfile and installs git sources. Use the `--clean` option to remove the directory and the `--path` option to override the default `./modules`.
 ```
   librarian-puppet install [--verbose] [--clean] [--path]
 ```
