@@ -13,23 +13,28 @@ module Librarian
         class_option :path, :type => :string,
                      :desc => "overrides target directory, default is ./modules"
 
+
         def self.bin!
           start
         end
 
         desc 'install', 'installs all git sources from your Puppetfile'
         method_option :clean, :type => :boolean, :desc => "calls clean before executing install"
+        method_option :puppetfile, :type => :string,
+                      :desc => "overrides used Puppetfile",
+                      :default => './Puppetfile'
         def install
           @verbose = options[:verbose]
           clean if options[:clean]
-          @custom_module_path = options[:path] 
-          eval(File.read(File.join(base_dir, 'Puppetfile')))
+          @custom_module_path = options[:path]
+  
+          eval(File.read(File.expand_path(options[:puppetfile])))
         end
         
         desc 'clean', 'clean modules directory'
         def clean
           target_directory = options[:path] || File.expand_path("./modules")
-          puts "Target Directory: #{target_directory}" if @verbose
+          puts "Target Directory: #{target_directory}" if options[:verbose]
           FileUtils.rm_rf target_directory
         end
       end
