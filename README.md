@@ -29,7 +29,7 @@ mod "puppetlabs/ntp",
     :ref => "99bae40f225db0dd052efbf1d4078a21f0333331"
 
 mod "apache",
-    :tarball => "http://apache.mirror.iweb.ca//httpd/httpd-2.4.4.tar.gz"
+    :tarball => "https://forge.puppetlabs.com/puppetlabs/apache/0.6.0.tar.gz"
 ```
 
 ## License
