@@ -2,6 +2,7 @@ require 'fileutils'
 require 'rubygems/package'
 require 'zlib'
 require 'open-uri'
+
 # This is an extremely simple file that can consume
 # a Puppet file with git references
 #
@@ -11,7 +12,6 @@ module Librarian
   module Puppet
     module Simple
       module Installer
-
         def base_dir
           @base_dir ||= Dir.pwd
         end
@@ -28,12 +28,69 @@ module Librarian
           @module_path
         end
 
-        def system_cmd (cmd, print=@verbose)
-          puts "Running cmd: #{cmd}" if print
+        def system_cmd (cmd)
+          print_verbose "Running cmd: #{cmd}"
           output = `#{cmd}`.split("\n")
-          puts output.join("\n") if print
+          print_verbose output
           raise(StandardError, "Cmd #{cmd} failed") unless $?.success?
           output
+        end
+
+        def mod(name, options = {})   
+          # We get the last part of the module name
+          # For example:
+          #   puppetlabs/ntp  results in ntp 
+          #   ntp             results in ntp 
+          module_name = name.split('/', 2).last
+
+          print_verbose "\n##### processing module #{name}..."
+
+          case
+          when options[:git]
+            install_git module_path, module_name, options[:git], options[:ref]
+          when options[:tarball]
+            install_tarball module_path, module_name, options[:tarball]
+          else
+            abort('only the :git and :tarball provider are currently supported')
+          end
+        end
+
+        private
+
+        def install_git(module_path, module_name, repo, ref = nil)
+          module_dir = File.join(module_path, module_name)
+
+          Dir.chdir(module_path) do
+            print_verbose "cloning #{repo}"
+            system_cmd("git clone #{repo} #{module_name}")
+            Dir.chdir(module_dir) do
+              system_cmd('git branch -r')
+              system_cmd("git checkout #{ref}") if ref
+            end
+          end
+        end
+
+        def install_tarball(module_path, module_name, remote_tarball)
+          Dir.mktmpdir do |tmp|
+            temp_file = File.join(tmp,"downloaded_module.tar.gz")
+            File.open(temp_file, "w+b") do |saved_file|
+              print_verbose "Downloading #{remote_tarball}..."
+              open(remote_tarball, 'rb') do |read_file|
+                saved_file.write(read_file.read)
+              end
+              saved_file.rewind
+
+              target_directory = File.join(module_path, module_name)
+              print_verbose "Extracting #{remote_tarball} to #{target_directory}..."
+              unzipped_target = ungzip(saved_file)
+              tarfile_full_name = untar(unzipped_target, module_path)
+              FileUtils.mv File.join(module_path, tarfile_full_name), target_directory
+            end
+          end
+        end
+
+        def print_verbose(text)
+          puts text if @verbose
         end
 
         # un-gzips the given IO, returning the
@@ -65,46 +122,6 @@ module Librarian
             end
           end
           tarfile_full_name
-        end
-
-        def mod(name, options = {})   
-          # We get the last part of the module name
-          # For example:
-          #   puppetlabs/ntp  results in ntp 
-          #   ntp             results in ntp 
-          module_name = name.split('/', 2).last
-
-          module_dir = File.join(module_path, module_name)
-          case
-          when options[:git]
-            Dir.chdir(module_path) do
-              puts "cloning #{options[:git]}" if @verbose
-              system_cmd("git clone #{options[:git]} #{module_name}")
-              Dir.chdir(module_dir) do
-                system_cmd('git branch -r') if @verbose
-                if options[:ref]
-                  system_cmd("git checkout #{options[:ref]}")
-                end
-              end
-            end
-          when options[:tarball]
-            remote_target = options[:tarball]
-            Dir.mktmpdir do |tmp|
-              local_target = File.join(tmp,"downloaded_module.tar.gz")
-              File.open(local_target, "w+b") do |saved_file|
-                open(remote_target, 'rb') do |read_file|
-                  saved_file.write(read_file.read)
-                end
-                saved_file.rewind
-                unzipped_target = ungzip(saved_file)
-                tarfile_full_name = untar(unzipped_target, module_path)
-                FileUtils.mv File.join(module_path, tarfile_full_name), File.join(module_path, module_name)
-              end
-            end
-          else
-            abort('only the :git and :tarball provider are currently supported')
-          end
-
         end
       end
     end
