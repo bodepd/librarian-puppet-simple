@@ -42,46 +42,52 @@ module Librarian
           #   puppetlabs/ntp  results in ntp 
           #   ntp             results in ntp 
           module_name = name.split('/', 2).last
-          module_dir = File.join(module_path, module_name)
 
           print_verbose "\n##### processing module #{name}..."
 
           case
           when options[:git]
-            Dir.chdir(module_path) do
-              print_verbose "cloning #{options[:git]}"
-              system_cmd("git clone #{options[:git]} #{module_name}")
-              Dir.chdir(module_dir) do
-                system_cmd('git branch -r')
-                if options[:ref]
-                  system_cmd("git checkout #{options[:ref]}")
-                end
-              end
-            end
+            install_git module_path, module_name, options[:git], options[:ref]
           when options[:tarball]
-            remote_tarball = options[:tarball]
-            Dir.mktmpdir do |tmp|
-              local_target = File.join(tmp,"downloaded_module.tar.gz")
-              File.open(local_target, "w+b") do |saved_file|
-                print_verbose "Downloading #{remote_tarball}..."
-                open(remote_tarball, 'rb') do |read_file|
-                  saved_file.write(read_file.read)
-                end
-                saved_file.rewind
-
-                target_directory = File.join(module_path, module_name)
-                print_verbose "Extracting #{remote_tarball} to #{target_directory}..."
-                unzipped_target = ungzip(saved_file)
-                tarfile_full_name = untar(unzipped_target, module_path)
-                FileUtils.mv File.join(module_path, tarfile_full_name), target_directory
-              end
-            end
+            install_tarball module_path, module_name, options[:tarball]
           else
             abort('only the :git and :tarball provider are currently supported')
           end
         end
 
         private
+
+        def install_git(module_path, module_name, repo, ref = nil)
+          module_dir = File.join(module_path, module_name)
+
+          Dir.chdir(module_path) do
+            print_verbose "cloning #{repo}"
+            system_cmd("git clone #{repo} #{module_name}")
+            Dir.chdir(module_dir) do
+              system_cmd('git branch -r')
+              system_cmd("git checkout #{ref}") if ref
+            end
+          end
+        end
+
+        def install_tarball(module_path, module_name, remote_tarball)
+          Dir.mktmpdir do |tmp|
+            temp_file = File.join(tmp,"downloaded_module.tar.gz")
+            File.open(temp_file, "w+b") do |saved_file|
+              print_verbose "Downloading #{remote_tarball}..."
+              open(remote_tarball, 'rb') do |read_file|
+                saved_file.write(read_file.read)
+              end
+              saved_file.rewind
+
+              target_directory = File.join(module_path, module_name)
+              print_verbose "Extracting #{remote_tarball} to #{target_directory}..."
+              unzipped_target = ungzip(saved_file)
+              tarfile_full_name = untar(unzipped_target, module_path)
+              FileUtils.mv File.join(module_path, tarfile_full_name), target_directory
+            end
+          end
+        end
 
         def print_verbose(text)
           puts text if @verbose
