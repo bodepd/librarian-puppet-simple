@@ -14,14 +14,12 @@ Gem::Specification.new do |s|
   automatically pulling in modules from the forge and git repositories with
   a single command.'
 
-  s.files = [
-    '.gitignore',
-    'LICENSE',
-    'README.md',
-  ] + Dir['{bin,lib}/**/*']
-
-  s.executables = ['librarian-puppet']
+  s.files         = `git ls-files`.split($/)
+  s.executables   = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
+  s.test_files    = s.files.grep(%r{^(test|spec|features)/})
+  s.require_paths = ["lib"]
 
   s.add_dependency "thor", "~> 0.15"
 
+  s.add_development_dependency "rspec", "~> 2.13"
 end

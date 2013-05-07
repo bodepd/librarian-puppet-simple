@@ -1,0 +1,6 @@
+mod "puppetlabs/ntp",
+    :git => "git://github.com/puppetlabs/puppetlabs-ntp.git",
+    :ref => "99bae40f225db0dd052efbf1d4078a21f0333331"
+
+mod "apache",
+    :tarball => "https://forge.puppetlabs.com/puppetlabs/apache/0.6.0.tar.gz"
