@@ -5,15 +5,23 @@ This project was created out of my frustration with dependency management in lib
 This project just has fewer commands, but they should be compatible with the original librarian-puppet:
 
 ### Clean
-Remove the directory where the modules will be installed, by default it will use `./modules` but you can override it by passing a `--path` option.
+Remove the directory where the modules will be installed. At the moment the supported options are:
+* `--verbose` display progress messages
+* `--path` override the default `./modules` where modules will be installed
+
 ```
   librarian-puppet clean [--verbose] [--path]
 ```
 
 ### Install
-Iterates through your Puppetfile and installs git sources. Use the `--clean` option to remove the directory and the `--path` option to override the default `./modules`.
+Iterates through your Puppetfile and installs git sources. At the moment the supported options are:
+* `--verbose` display progress messages
+* `--clean` remove the directory before installing modules
+* `--path` override the default `./modules` where modules will be installed
+* `--puppetfile` override the default `./Puppetfile` used to find the modules
+
 ```
-  librarian-puppet install [--verbose] [--clean] [--path]
+  librarian-puppet install [--verbose] [--clean] [--path] [--puppetfile]
 ```
 
 ## Puppetfile
@@ -31,6 +39,15 @@ mod "puppetlabs/ntp",
 mod "apache",
     :tarball => "https://forge.puppetlabs.com/puppetlabs/apache/0.6.0.tar.gz"
 ```
+
+## Setting up for development and running the specs
+Just clone the repo and run the following commands:
+```
+bundle exec install --path=vendor
+bundle exec rspec
+```
+
+Beware that the functional tests will download files from GitHub and PuppetForge and will break if either is unavailable.
 
 ## License
 
