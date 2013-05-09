@@ -40,6 +40,24 @@ module Librarian
           puts "Target Directory: #{target_directory}" if options[:verbose]
           FileUtils.rm_rf target_directory
         end
+
+        desc 'git_status', 'determine the current status of checked out git repos'
+        def git_status
+          @custom_module_path = options[:path]
+          # polulate @modules
+          eval(File.read(File.expand_path(options[:puppetfile])))
+          each_module_of_type(:git) do |repo|
+            Dir.chdir(File.join(module_path, repo[:name])) do
+              status = system_cmd('git status')
+              if status.include?('nothing to commit (working directory clean)')
+                puts "Module #{module_name} has not changed" if options[:verbose]
+              else
+                puts "Uncommitted changes for: #{repo[:name]}"
+                puts "  #{status.join("\n  ")}"
+              end
+            end
+          end
+        end
       end
     end
   end
