@@ -33,7 +33,7 @@ module Librarian
           eval(File.read(File.expand_path(options[:puppetfile])))
           install!
         end
-        
+
         desc 'clean', 'clean modules directory'
         def clean
           target_directory = options[:path] || File.expand_path("./modules")
@@ -50,7 +50,7 @@ module Librarian
             Dir.chdir(File.join(module_path, repo[:name])) do
               status = system_cmd('git status')
               if status.include?('nothing to commit (working directory clean)')
-                puts "Module #{module_name} has not changed" if options[:verbose]
+                puts "Module #{repo[:name]} has not changed" if options[:verbose]
               else
                 puts "Uncommitted changes for: #{repo[:name]}"
                 puts "  #{status.join("\n  ")}"
@@ -58,6 +58,29 @@ module Librarian
             end
           end
         end
+
+        desc 'dev_setup', 'adds development r/w remotes to each repo (assumes remote has the same name as current repo)'
+        method_option :remote, :type => :string, :desc => "Account name of remote to add"
+        def dev_setup(remote_name)
+          each_module_of_type(:git) do |repo|
+            remotes = system_cmd('git remote')
+            if remotes.include?(remote_name)
+              puts "Did not have to add remote #{remote_name} to #{repo[:name]}"
+            elsif ! remotes.include?('origin')
+              raise(TestException, "Repo #{repo[:name]} has no remote called origin, failing")
+            else
+              remote_url = git_cmd('remote show origin').detect {|x| x =~ /\s+Push\s+URL: / }
+              if remote_url =~ /(git|https?):\/\/(.+)\/(.+)?\/(.+)/
+                url = "git@#{$2}:#{remote_name}/#{$4}"
+              else
+                puts "remote_url #{remote_url} did not have the expected format. weird..."
+              end
+              puts "Adding remote #{remote_name} as #{url}"
+              git_cmd("remote add #{remote_name} #{url}")
+            end
+          end
+        end
+
       end
     end
   end
