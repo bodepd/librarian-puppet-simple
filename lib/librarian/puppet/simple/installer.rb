@@ -2,6 +2,8 @@ require 'fileutils'
 require 'rubygems/package'
 require 'zlib'
 require 'open-uri'
+require 'librarian/puppet/simple/util'
+require 'librarian/puppet/simple/iterator'
 
 # This is an extremely simple file that can consume
 # a Puppet file with git references
@@ -12,46 +14,25 @@ module Librarian
   module Puppet
     module Simple
       module Installer
-        def base_dir
-          @base_dir ||= Dir.pwd
-        end
 
-        def module_path(dir=base_dir)
-          unless @module_path
-            if @custom_module_path
-              @module_path = File.expand_path @custom_module_path
+        include Librarian::Puppet::Simple::Util
+        include Librarian::Puppet::Simple::Iterator
+
+        # installs modules using the each_module method from our
+        # iterator mixin
+        def install!
+          each_module do |repo|
+
+            print_verbose "\n##### processing module #{repo[:name]}..."
+
+            case
+            when repo[:git]
+              install_git module_path, repo[:name], repo[:git], repo[:ref]
+            when repo[:tarball]
+              install_tarball module_path, repo[:name], repo[:tarball]
             else
-              @module_path = File.join(dir, 'modules')
+              abort('only the :git and :tarball provider are currently supported')
             end
-            Dir.mkdir(@module_path) unless File.exists?(@module_path)
-          end
-          @module_path
-        end
-
-        def system_cmd (cmd)
-          print_verbose "Running cmd: #{cmd}"
-          output = `#{cmd}`.split("\n")
-          print_verbose output
-          raise(StandardError, "Cmd #{cmd} failed") unless $?.success?
-          output
-        end
-
-        def mod(name, options = {})   
-          # We get the last part of the module name
-          # For example:
-          #   puppetlabs/ntp  results in ntp 
-          #   ntp             results in ntp 
-          module_name = name.split('/', 2).last
-
-          print_verbose "\n##### processing module #{name}..."
-
-          case
-          when options[:git]
-            install_git module_path, module_name, options[:git], options[:ref]
-          when options[:tarball]
-            install_tarball module_path, module_name, options[:tarball]
-          else
-            abort('only the :git and :tarball provider are currently supported')
           end
         end
 
@@ -87,10 +68,6 @@ module Librarian
               FileUtils.mv File.join(module_path, tarfile_full_name), target_directory
             end
           end
-        end
-
-        def print_verbose(text)
-          puts text if @verbose
         end
 
         # un-gzips the given IO, returning the
