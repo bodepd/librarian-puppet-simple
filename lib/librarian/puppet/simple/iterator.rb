@@ -18,7 +18,9 @@ module Librarian
             @modules[:tarball] ||= []
             @modules[:tarball].push(options.merge(:name => module_name))
           else
-            abort('only the :git and :tarball providers are currently supported')
+            @modules[:forge] ||= []
+            @modules[:forge].push(options.merge(:name => module_name))
+            #abort('only the :git and :tarball providers are currently supported')
           end
         end
 
