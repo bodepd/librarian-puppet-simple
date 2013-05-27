@@ -51,5 +51,25 @@ describe "Functional - Install" do
       status.should == 0
       output.should include('##### processing module apache')
     end
+
+    describe 'when modules are already installed' do
+      temp_directory = nil
+
+      before :each do
+        temp_directory = Dir.mktmpdir
+        Dir.entries(temp_directory).should =~ ['.', '..']
+        FileUtils.touch File.join(temp_directory, 'apache')
+        Dir.entries(temp_directory).should =~ ['.', '..', 'apache']
+      end
+
+      it 'without clean it should only install ntp' do
+        output, status = execute_captured("bin/librarian-puppet install --verbose --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
+        status.should == 0
+        output.should include('Module apache already installed')
+        Dir.entries(temp_directory).should =~ ['.', '..', 'apache', 'ntp']
+      end
+
+    end
   end
+
 end
