@@ -25,19 +25,26 @@ module Librarian
 
             print_verbose "\n##### processing module #{repo[:name]}..."
 
-            case
-            when repo[:git]
-              install_git module_path, repo[:name], repo[:git], repo[:ref]
-            when repo[:tarball]
-              install_tarball module_path, repo[:name], repo[:tarball]
+            module_dir = File.join(module_path, repo[:name])
+
+            unless File.exists?(module_dir)
+              case
+              when repo[:git]
+                install_git module_path, repo[:name], repo[:git], repo[:ref]
+              when repo[:tarball]
+                install_tarball module_path, repo[:name], repo[:tarball]
+              else
+                abort('only the :git and :tarball provider are currently supported')
+              end
             else
-              abort('only the :git and :tarball provider are currently supported')
+              print_verbose "\nModule #{repo[:name]} already installed in #{module_path}"
             end
           end
         end
 
         private
 
+        # installs sources that are git repos
         def install_git(module_path, module_name, repo, ref = nil)
           module_dir = File.join(module_path, module_name)
 
