@@ -34,10 +34,9 @@ module Librarian
           output
         end
 
-        private
-          def print_verbose(text)
-            puts text if @verbose
-          end
+        def print_verbose(text)
+          puts text if @verbose
+        end
 
       end
     end

@@ -7,8 +7,10 @@ module Librarian
     module Simple
       class CLI < Thor
 
+        include Librarian::Puppet::Simple::Util
         include Librarian::Puppet::Simple::Installer
         include Librarian::Puppet::Simple::Iterator
+
         class_option :verbose, :type => :boolean,
                      :desc => 'verbose output for executed commands'
 
@@ -44,7 +46,7 @@ module Librarian
         desc 'git_status', 'determine the current status of checked out git repos'
         def git_status
           @custom_module_path = options[:path]
-          # polulate @modules
+          # populate @modules
           eval(File.read(File.expand_path(options[:puppetfile])))
           each_module_of_type(:git) do |repo|
             Dir.chdir(File.join(module_path, repo[:name])) do
@@ -60,23 +62,30 @@ module Librarian
         end
 
         desc 'dev_setup', 'adds development r/w remotes to each repo (assumes remote has the same name as current repo)'
-        method_option :remote, :type => :string, :desc => "Account name of remote to add"
         def dev_setup(remote_name)
+          @custom_module_path = options[:path]
+          # populate @modules
+          eval(File.read(File.expand_path(options[:puppetfile])))
           each_module_of_type(:git) do |repo|
-            remotes = system_cmd('git remote')
-            if remotes.include?(remote_name)
-              puts "Did not have to add remote #{remote_name} to #{repo[:name]}"
-            elsif ! remotes.include?('origin')
-              raise(TestException, "Repo #{repo[:name]} has no remote called origin, failing")
-            else
-              remote_url = git_cmd('remote show origin').detect {|x| x =~ /\s+Push\s+URL: / }
-              if remote_url =~ /(git|https?):\/\/(.+)\/(.+)?\/(.+)/
-                url = "git@#{$2}:#{remote_name}/#{$4}"
+            Dir.chdir(File.join((options[:path] || 'modules'), repo[:name])) do
+              print_verbose "Adding development remote for git repo #{repo[:name]}"
+              remotes = system_cmd('git remote')
+              if remotes.include?(remote_name)
+                puts "Did not have to add remote #{remote_name} to #{repo[:name]}"
+              elsif ! remotes.include?('origin')
+                raise(TestException, "Repo #{repo[:name]} has no remote called origin, failing")
               else
-                puts "remote_url #{remote_url} did not have the expected format. weird..."
+                remote_url = system_cmd('git remote show origin').detect {|x| x =~ /\s+Push\s+URL: / }
+                if remote_url =~ /(git|https?):\/\/(.+)\/(.+)?\/(.+)/
+                  url = "git@#{$2}:#{remote_name}/#{$4}"
+                  puts "Adding remote #{remote_name} as #{url}"
+                  system_cmd("git remote add #{remote_name} #{url}")
+                elsif remote_url =~ /^git@/
+                  puts "Origin is already a read/write remote, skipping b/c this is unexpected"
+                else
+                  puts "remote_url #{remote_url} did not have the expected format. weird..."
+                end
               end
-              puts "Adding remote #{remote_name} as #{url}"
-              git_cmd("remote add #{remote_name} #{url}")
             end
           end
         end
