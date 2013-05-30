@@ -25,6 +25,14 @@ module Librarian
           end
         end
 
+        def modules
+          @modules
+        end
+
+        def clear_modules
+          @modules = nil
+        end
+
         # iterate through all modules
         def each_module(&block)
           (@modules || {}).each do |type, repos|
