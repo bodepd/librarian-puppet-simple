@@ -29,10 +29,14 @@ module Librarian
         end
 
         # run a command on the system
-        def system_cmd (cmd)
+        def system_cmd (cmd, print_output=true)
           print_verbose "Running cmd: #{cmd}"
           output = `#{cmd}`.split("\n")
-          print_verbose output
+          if print_output
+            puts output
+          else
+            print_verbose output
+          end
           raise(StandardError, "Cmd #{cmd} failed") unless $?.success?
           output
         end
