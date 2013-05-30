@@ -90,6 +90,144 @@ module Librarian
           end
         end
 
+        #
+        # I am not sure if anyone besides me (Dan Bode) should use this command.
+        # It is specifically for the use case where you are managing downstream versions
+        # of Puppet modules, where you want to track the relationship between your downstream
+        # forks and upstream.
+        # It required a specially formatted Puppetfile that expects an environment variable called
+        # repo_to_use that accepts the values 'upstream' and 'downstream'. It should use that environment
+        # variable to be able to generate either the upstream or downstream set of repos.
+        #
+        # Given those requirements, it can be used to compare the revision history differences betwee
+        # those commits.
+        #
+        desc 'compare_repos', 'compares the specified upstream and downstream repos'
+        method_option :output_file, :type => :string,
+          :desc => "Name of Puppetfile to save the results as"
+        method_option :ignore_merges, :type => :boolean,
+          :desc => 'Indicates that merge commits should be ignored'
+        method_option :show_diffs, :type => :boolean,
+          :desc => 'Show code differences of divergent commits (add -u)'
+        # I was really just using this for testing
+        # not sure if end users need it
+        method_option :existing_tmp_dir, :type => :string,
+          :desc => 'Uses an existing directory. Assumes the downstream repos have already been populated.'
+        method_option :upstream_only, :type => :boolean,
+          :desc => 'Only show commits that are only in the upstream'
+        method_option :downstream_only, :type => :boolean,
+          :desc => 'Only show commits that are only in downstream'
+        method_option :oneline, :type => :boolean,
+          :desc => 'Condense log output to one line'
+
+
+        def compare_repos
+
+          repo_hash = {}
+          @verbose            = options[:verbose]
+          abort('path not supported by compare_repos command') if options[:path]
+          if options[:downstream_only] and options[:upstream_only]
+            abort('Cannot specify both downstream_only and upstream_only')
+          end
+
+          # create path where code will be stored
+          if options[:existing_tmp_dir]
+            path = options[:existing_tmp_dir]
+          else
+            path = File.join('.tmp', Time.now.strftime("%Y_%m_%d_%H_%S"))
+          end
+
+          FileUtils.mkdir_p(path)
+          @custom_module_path = path
+
+          # install the downstream modules in our tmp directory and build out a hash
+          downstream = build_puppetfile_hash('downstream', !options[:existing_tmp_dir])
+          # just build a hash of the downstream modules
+          upstream   = build_puppetfile_hash('upstream', false)
+
+          unless ( (downstream.keys - upstream.keys) == [] and
+                   (upstream.keys - downstream.keys)
+                 )
+            abort('Your Puppetfile did not produce the same upstream and downstream repos, this is not yet supported')
+          else
+
+            upstream.each do |us_name, us_repo|
+              # compare to see if the source of revisions are the same
+              ds_repo = downstream[us_name]
+              if ds_repo[:git] == us_repo[:git] and ds_repo[:ref] == us_repo[:ref]
+                print_verbose("\nSources of #{us_name} are the same, nothing to compare.")
+              else
+                Dir.chdir(File.join(path, us_name)) do
+                  if us_repo[:git] =~ /(git|https?):\/\/(.+)\/(.+)?\/(.+)/
+                    remote_name = $3
+                    remotes = system_cmd('git remote')
+                    if remotes.include?(remote_name)
+                      puts "Did not have to add remote #{remote_name} to #{us_repo[:name]}, it was already there"
+                    else
+                      puts "Adding remote #{remote_name} #{us_repo[:git]}"
+                      system_cmd("git remote add #{remote_name} #{us_repo[:git]}")
+                    end
+                    system_cmd("git fetch #{remote_name}")
+                    if us_repo[:ref] =~ /^origin\/(\S+)$/
+                      compare_ref = "#{remote_name}/#{$1}"
+                    else
+                      compare_ref = "#{remote_name}/#{us_repo[:ref]}"
+                    end
+
+                    # set up parameters for git log call
+                    ignore_merges = options[:ignore_merges] ? '--no-merges' : ''
+                    show_diffs    = options[:show_diffs]    ? '-u' : ''
+                    oneline       = options[:oneline]       ? '--oneline' : ''
+                    # show the results, this assumes that HEAD is up-to-date (which it should be)
+
+                    if options[:downstream_only] and options[:upstream_only]
+                      abort('Cannot specify both downstream_only and upstream_only')
+                    end
+                    puts "########## Results for #{us_name} ##########"
+                    unless options[:upstream_only]
+                      puts "  ######## Commits only in downstream ########"
+                      results = system_cmd("git log --left-only HEAD...#{compare_ref} #{ignore_merges} #{show_diffs} #{oneline}", true)
+                      puts "  ######## End Downstream results ########"
+                    end
+                    unless options[:downstream_only]
+                      puts "  ######## Commits only in upstream ########"
+                      results = system_cmd("git log --right-only HEAD...#{compare_ref} #{ignore_merges} #{show_diffs} #{oneline}", true)
+                      puts "  ######## End upstream ########"
+                    end
+                    puts "########## End of Results for #{us_name} ##########"
+                  else
+                    abort("Unrecognizable upstream url #{us_repo[:git]}")
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        private
+
+          # builds out a certain type of repo
+          def build_puppetfile_hash(name, perform_installation=false)
+            repo_hash = {}
+            # set environment variable to determine what version of modules to install
+            # this assumes that the environment variable repos_to_use has been coded in
+            # your Puppetfile to allow installation of different versions of modules
+            ENV['repos_to_use'] = name
+            # parse Puppetfile and install modules in our tmp directory.
+            eval(File.read(File.expand_path(options[:puppetfile])))
+            # install modules if desired
+            install! if perform_installation
+
+            # iterate through all git modules
+            each_module_of_type(:git) do |git_repo|
+              abort("Module git_repo[:name] was defined multiple times in same Puppetfile") if repo_hash[git_repo[:name]]
+              repo_hash[git_repo[:name]] = git_repo
+            end
+            # clear out the modules once finished
+            clear_modules
+            repo_hash
+          end
+
       end
     end
   end
