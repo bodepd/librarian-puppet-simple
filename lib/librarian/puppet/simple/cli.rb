@@ -204,7 +204,32 @@ module Librarian
           end
         end
 
+        desc 'generate_puppetfile', 'generates a static version of the Puppetfile'
+        method_option :out_file,
+          :desc => 'output file where static puppetfile should be written to'
+        def generate_puppetfile
+          eval(File.read(File.expand_path(options[:puppetfile])))
+          if options[:out_file]
+            File.open(options[:out_file], 'w') do |fh|
+              print_puppet_file(fh)
+            end
+          else
+            print_puppet_file(STDOUT)
+          end
+        end
+
         private
+
+          def print_puppet_file(stream)
+            each_module do |repo|
+              repo.delete(:name)
+              out_str = repo.delete(:full_name)
+              repo.each do |k,v|
+                out_str << ", :#{k} => #{v}"
+              end
+              stream.puts(out_str)
+            end
+          end
 
           # builds out a certain type of repo
           def build_puppetfile_hash(name, perform_installation=false)
