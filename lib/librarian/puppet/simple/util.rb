@@ -29,7 +29,7 @@ module Librarian
         end
 
         # run a command on the system
-        def system_cmd (cmd, print_output=true)
+        def system_cmd (cmd, print_output=false)
           print_verbose "Running cmd: #{cmd}"
           output = `#{cmd}`.split("\n")
           if print_output
