@@ -36,6 +36,32 @@ module Librarian
           install!
         end
 
+        desc 'update', 'updates all git sources from your Puppetfile'
+        method_option :update, :type => :boolean, :desc => "Updates git sources"
+        def update
+          @verbose = options[:verbose]
+          @custom_module_path = options[:path]
+          eval(File.read(File.expand_path(options[:puppetfile])))
+          each_module_of_type(:git) do |repo|
+            Dir.chdir(File.join(module_path, repo[:name])) do
+              # if no ref is given, assume master
+              if repo[:ref] == nil
+                repo_ref = 'master'
+              else
+                repo_ref = repo[:ref]
+              end
+              # if a SHA-1 ref is given, then a specific version is wanted and
+              # there is no need to update.
+              if repo_ref =~ /^([0-9a-f]{5,40})$/
+                print_verbose "skipping #{repo[:name]} since exact ref, #{repo_ref}, was detected."
+              else
+                print_verbose "\n\n#{repo[:name]} -- git pull origin #{repo_ref}"
+                git_pull_cmd = system_cmd("git pull origin #{repo_ref}")
+              end
+            end
+          end
+        end
+
         desc 'clean', 'clean modules directory'
         def clean
           target_directory = options[:path] || File.expand_path("./modules")
