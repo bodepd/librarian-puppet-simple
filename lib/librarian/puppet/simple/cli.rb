@@ -46,18 +46,14 @@ module Librarian
             Dir.chdir(File.join(module_path, repo[:name])) do
               # if no ref is given, assume master
               if repo[:ref] == nil
-                repo_ref = 'master'
+                checkout_ref  = 'origin/master'
+                remote_branch = 'master'
               else
-                repo_ref = repo[:ref]
+                checkout_ref  = repo[:ref]
+                remote_branch = repo[:ref].gsub(/^origin\//, '')
               end
-              # if a SHA-1 ref is given, then a specific version is wanted and
-              # there is no need to update.
-              if repo_ref =~ /^([0-9a-f]{5,40})$/
-                print_verbose "skipping #{repo[:name]} since exact ref, #{repo_ref}, was detected."
-              else
-                print_verbose "\n\n#{repo[:name]} -- git pull origin #{repo_ref}"
-                git_pull_cmd = system_cmd("git pull origin #{repo_ref}")
-              end
+              print_verbose "\n\n#{repo[:name]} -- git fetch origin #{remote_branch} && git checkout #{checkout_ref}"
+              git_pull_cmd = system_cmd("git fetch origin #{remote_branch} && git checkout #{checkout_ref}")
             end
           end
         end
