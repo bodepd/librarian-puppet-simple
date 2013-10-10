@@ -24,6 +24,18 @@ Iterates through your Puppetfile and installs git sources. At the moment the sup
   librarian-puppet install [--verbose] [--clean] [--path] [--puppetfile]
 ```
 
+### Update
+Iterates through your Puppetfile and updates git sources. If a SHA-1 hash is specified in the `:ref`, the module will not be updated.
+
+Supported options are:<br/>
+<li>`--verbose` display progress messages</li>
+<li>`--path` override the default `./modules` where modules will be installed</li>
+<li> `--puppetfile` override the default `./Puppetfile` used to find the modules</li>
+
+```
+  librarian-puppet update [--verbose] [--path] [--puppetfile]
+```
+
 ## Puppetfile
 The processed Puppetfile may contain two different types of modules, `git` and `tarball`. The `git` option accepts an optional `ref` parameter.
 
