@@ -52,8 +52,8 @@ module Librarian
                 checkout_ref  = repo[:ref]
                 remote_branch = repo[:ref].gsub(/^origin\//, '')
               end
-              print_verbose "\n\n#{repo[:name]} -- git fetch origin #{remote_branch} && git checkout #{checkout_ref}"
-              git_pull_cmd = system_cmd("git fetch origin #{remote_branch} && git checkout #{checkout_ref}")
+              print_verbose "\n\n#{repo[:name]} -- git fetch origin && git checkout #{checkout_ref}"
+              git_pull_cmd = system_cmd("git fetch origin && git checkout #{checkout_ref}")
             end
           end
         end
