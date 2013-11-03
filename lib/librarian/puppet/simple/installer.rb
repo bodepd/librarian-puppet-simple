@@ -23,17 +23,14 @@ module Librarian
         def install!
           each_module do |repo|
             print_verbose "\n##### processing module #{repo[:name]}..."
+            # module path is where ALL the modules go, not this particular one
             module_path = module_path()
-            if repo[:subdir] 
-              module_path = File.join(module_path, repo[:subdir])
-              FileUtils.mkdir_p(module_path) unless File.exists?(module_path)
-            end
-            module_dir = File.join(module_path, repo[:name])
+            module_dir = File.join(module_path, repo[:subdir] || repo[:name])
 
             unless File.exists?(module_dir)
               case
               when repo[:git]
-                install_git module_path, repo[:name], repo[:git], repo[:ref]
+                install_git module_path, repo[:name], repo[:git], repo[:ref], repo[:subdir]
               when repo[:tarball]
                 install_tarball module_path, repo[:name], repo[:tarball]
               else
@@ -48,15 +45,17 @@ module Librarian
         private
 
         # installs sources that are git repos
-        def install_git(module_path, module_name, repo, ref = nil)
-          module_dir = File.join(module_path, module_name)
+        def install_git(module_path, module_name, repo, ref = nil, subdir = nil)
+          folder_name = subdir || module_name
+          module_dir = File.join(module_path, folder_name)
 
           Dir.chdir(module_path) do
             print_verbose "cloning #{repo}"
-            system_cmd("git clone #{repo} #{module_name}")
-            Dir.chdir(module_dir) do
+            system_cmd("git clone #{repo} #{folder_name}")
+            Dir.chdir(folder_name) do
               system_cmd('git branch -r')
               system_cmd("git checkout #{ref}") if ref
+              system_cmd("git filter-branch --subdirectory-filter #{subdir}") if subdir
             end
           end
         end

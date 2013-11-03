@@ -9,7 +9,12 @@ require 'open3'
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
   config.run_all_when_everything_filtered = true
-  config.filter_run :focus
+
+  # if ENV['INTEGRATION']
+  #   config.filter_run :type => 'integration'
+  # else
+  #   config.filter_run_excluding :type => 'integration'
+  # end
 
   # Run specs in random order to surface order dependencies. If you find an
   # order dependency and want to debug it, you can fix the order by providing

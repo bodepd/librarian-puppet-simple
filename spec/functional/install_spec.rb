@@ -22,30 +22,33 @@ describe "Functional - Install" do
 
     before :each do
       temp_directory = Dir.mktmpdir
-      Dir.entries(temp_directory).should =~ ['.', '..']
+      Dir.entries(temp_directory).should =~ %w|. ..|
       FileUtils.touch File.join(temp_directory, 'trashfile')
-      Dir.entries(temp_directory).should =~ ['.', '..', 'trashfile']
+      Dir.entries(temp_directory).should =~ %w|. .. trashfile|
     end
 
     after :each do
       FileUtils.rm_rf temp_directory
     end
 
-    it "install the modules in a temp directory" do
+    it "install the modules in a temp directory", :type => 'integration' do
       output, status = execute_captured("bin/librarian-puppet install --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
 
       status.should == 0
       Dir.entries(temp_directory).should =~ %w|. .. apache ntp trashfile dnsclient testlps subdir-A|
+      Dir.entries(File.join(temp_directory, 'subdir-A')).should =~ %w|. .. .git Hello.txt|
     end
 
-    it "with --clean it cleans the directory before installing the modules in a temp directory" do
+    
+
+    it "with --clean it cleans the directory before installing the modules in a temp directory", :type => 'integration' do
       output, status = execute_captured("bin/librarian-puppet install --clean --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
 
       status.should == 0
       Dir.entries(temp_directory).should =~ %w|. .. apache ntp dnsclient testlps subdir-A|
     end
 
-    it "with --verbose it outputs progress messages" do
+    it "with --verbose it outputs progress messages", :type => 'integration' do
       output, status = execute_captured("bin/librarian-puppet install --verbose --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
 
       status.should == 0
@@ -57,12 +60,12 @@ describe "Functional - Install" do
 
       before :each do
         temp_directory = Dir.mktmpdir
-        Dir.entries(temp_directory).should =~ ['.', '..']
+        Dir.entries(temp_directory).should =~ %w|. ..|
         FileUtils.touch File.join(temp_directory, 'apache')
-        Dir.entries(temp_directory).should =~ ['.', '..', 'apache']
+        Dir.entries(temp_directory).should =~ %w|. .. apache|
       end
 
-      it 'without clean it should only install ntp' do
+      it 'without clean it should only install ntp', :type => 'integration' do
         output, status = execute_captured("bin/librarian-puppet install --verbose --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
         status.should == 0
         output.should include('Module apache already installed')
