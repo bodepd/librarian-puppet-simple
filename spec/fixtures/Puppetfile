@@ -11,3 +11,8 @@ mod 'ghoneycutt/testlps',
 mod 'ghoneycutt/dnsclient',
   :git => 'git://github.com/ghoneycutt/puppet-module-dnsclient.git',
   :ref => 'v3.0.4'
+
+mod 'haf/empty-repository',
+  :git => 'git://github.com/haf/empty-repository.git',
+  :subdir => 'subdir-A'
+
