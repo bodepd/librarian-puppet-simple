@@ -35,14 +35,14 @@ describe "Functional - Install" do
       output, status = execute_captured("bin/librarian-puppet install --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
 
       status.should == 0
-      Dir.entries(temp_directory).should =~ ['.', '..', 'apache', 'ntp', 'trashfile']
+      Dir.entries(temp_directory).should =~ %w|. .. apache ntp trashfile dnsclient testlps|
     end
 
     it "with --clean it cleans the directory before installing the modules in a temp directory" do
       output, status = execute_captured("bin/librarian-puppet install --clean --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
 
       status.should == 0
-      Dir.entries(temp_directory).should =~ ['.', '..', 'apache', 'ntp']
+      Dir.entries(temp_directory).should =~ %w|. .. apache ntp dnsclient testlps|
     end
 
     it "with --verbose it outputs progress messages" do
@@ -66,9 +66,8 @@ describe "Functional - Install" do
         output, status = execute_captured("bin/librarian-puppet install --verbose --path=#{temp_directory} --puppetfile=spec/fixtures/Puppetfile")
         status.should == 0
         output.should include('Module apache already installed')
-        Dir.entries(temp_directory).should =~ ['.', '..', 'apache', 'ntp']
+        Dir.entries(temp_directory).should =~ %w|. .. apache ntp dnsclient testlps|
       end
-
     end
   end
 
