@@ -88,7 +88,7 @@ module Librarian
           end
         end
 
-	# makes a sparse git checkout
+        # makes a sparse git checkout
         def sparse_checkout(module_dir, repo, path)
           Dir.mkdir(module_dir)
           Dir.chdir(module_dir) do
@@ -97,7 +97,7 @@ module Librarian
             system_cmd("git remote add -f origin #{repo}")
             system_cmd("git config core.sparsecheckout true")
             # do this using file io
-            system_cmd("echo #{path} >> .git/info/sparse-checkout)")
+            system_cmd("echo #{path} >> .git/info/sparse-checkout")
             system_cmd("git pull origin")
           end
         end
