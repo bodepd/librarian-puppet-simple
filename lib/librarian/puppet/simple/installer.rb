@@ -98,7 +98,7 @@ module Librarian
             system_cmd("git config core.sparsecheckout true")
             # do this using file io
             system_cmd("echo #{path} >> .git/info/sparse-checkout")
-            system_cmd("git pull origin")
+            system_cmd("git pull origin HEAD")
           end
         end
 
