@@ -50,13 +50,12 @@ module Librarian
 
           if path.nil?
             clone(module_name, repo)
+            Dir.chdir(module_dir) do
+              system_cmd('git branch -r')
+              system_cmd("git checkout #{ref}") if ref
+            end
           else
-            sparse_checkout(module_dir, repo, path)
-          end
-
-          Dir.chdir(module_dir) do
-            system_cmd('git branch -r')
-            system_cmd("git checkout #{ref}") if ref
+            sparse_checkout(module_dir, repo, ref, path)
           end
         end
 
@@ -89,7 +88,7 @@ module Librarian
         end
 
         # makes a sparse git checkout
-        def sparse_checkout(module_dir, repo, path)
+        def sparse_checkout(module_dir, repo, ref, path)
           Dir.mkdir(module_dir)
           Dir.chdir(module_dir) do
             print_verbose "sparse checkout #{repo} #{path}"
@@ -98,7 +97,8 @@ module Librarian
             system_cmd("git config core.sparsecheckout true")
             # do this using file io
             system_cmd("echo #{path} >> .git/info/sparse-checkout")
-            system_cmd("git pull origin HEAD")
+            system_cmd("git pull origin #{ref.nil? ? HEAD : ref}")
+            system_cmd("mv #{path} .")
           end
         end
 
