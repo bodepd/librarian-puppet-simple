@@ -46,16 +46,15 @@ module Librarian
 
         # installs sources that are git repos
         def install_git(module_path, module_name, repo, ref = nil, path = nil)
-          module_dir = File.join(module_path, module_name)
-
           if path.nil?
+            module_dir = File.join(module_path, module_name)
             clone(module_name, repo)
             Dir.chdir(module_dir) do
               system_cmd('git branch -r')
               system_cmd("git checkout #{ref}") if ref
             end
           else
-            sparse_checkout(module_dir, repo, ref, path)
+            sparse_checkout(module_path, module_name, repo, ref, path)
           end
         end
 
@@ -88,17 +87,19 @@ module Librarian
         end
 
         # makes a sparse git checkout
-        def sparse_checkout(module_dir, repo, ref, path)
-          Dir.mkdir(module_dir)
-          Dir.chdir(module_dir) do
+        def sparse_checkout(module_path, module_name, repo, ref, path)
+          Dir.mktmpdir do |tmp|
             print_verbose "sparse checkout #{repo} #{path}"
             system_cmd("git init")
             system_cmd("git remote add -f origin #{repo}")
             system_cmd("git config core.sparsecheckout true")
-            # do this using file io
-            system_cmd("echo #{path} >> .git/info/sparse-checkout")
+            File.open(File.join(tmp, ".git/info/sparse-checkout"), "w") do |f|
+              f.write "#{path}"
+            end
             system_cmd("git pull origin #{ref.nil? ? HEAD : ref}")
-            system_cmd("mv #{path}/* . && rmdir -p #{path}")
+            Dir.glob(File.join(tmp, path, "*")) do |f|
+              FileUtils.mv File.join(tmp, f), module_path
+            end
           end
         end
 
