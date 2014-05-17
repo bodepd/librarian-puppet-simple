@@ -89,16 +89,20 @@ module Librarian
         # makes a sparse git checkout
         def sparse_checkout(module_path, module_name, repo, ref, path)
           Dir.mktmpdir do |tmp|
-            print_verbose "sparse checkout #{repo} #{path}"
-            system_cmd("git init")
-            system_cmd("git remote add -f origin #{repo}")
-            system_cmd("git config core.sparsecheckout true")
-            File.open(File.join(tmp, ".git/info/sparse-checkout"), "w") do |f|
-              f.write "#{path}"
+            Dir.chdir(tmp) do
+              print_verbose "sparse checkout #{repo} #{path}"
+              system_cmd("git init")
+              system_cmd("git remote add -f origin #{repo}")
+              system_cmd("git config core.sparsecheckout true")
+              File.open(File.join(tmp, ".git/info/sparse-checkout"), "w") do |f|
+                f.write "#{path}"
+              end
+              system_cmd("git pull origin #{ref.nil? ? "HEAD" : ref}")
             end
-            system_cmd("git pull origin #{ref.nil? ? HEAD : ref}")
+            target_directory = File.join(module_path, module_name)
+            FileUtils.mkdir_p target_directory
             Dir.glob(File.join(tmp, path, "*")) do |f|
-              FileUtils.mv File.join(tmp, f), module_path
+              FileUtils.mv f, target_directory
             end
           end
         end
