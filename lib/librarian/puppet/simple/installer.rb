@@ -98,11 +98,12 @@ module Librarian
                 f.write "#{path}"
               end
               system_cmd("git pull origin #{ref.nil? ? "HEAD" : ref}")
-            end
-            target_directory = File.join(module_path, module_name)
-            FileUtils.mkdir_p target_directory
-            Dir.glob(File.join(tmp, path, "*")) do |f|
-              FileUtils.mv f, target_directory
+              target_directory = File.join(module_path, module_name)
+              FileUtils.mkdir_p target_directory
+              Dir.foreach(path) do |f|
+                next if f == "." or f == ".."
+                FileUtils.mv File.join(path, f), target_directory
+              end
             end
           end
         end
