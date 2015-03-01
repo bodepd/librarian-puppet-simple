@@ -44,16 +44,16 @@ module Librarian
           eval(File.read(File.expand_path(options[:puppetfile])))
           each_module_of_type(:git) do |repo|
             Dir.chdir(File.join(module_path, repo[:name])) do
+              remote = repo[:git]
               # if no ref is given, assume master
-              if repo[:ref] == nil
-                checkout_ref  = 'origin/master'
-                remote_branch = 'master'
-              else
-                checkout_ref  = repo[:ref]
-                remote_branch = repo[:ref].gsub(/^origin\//, '')
+              branch = repo[:ref] || 'master'
+              if branch =~ /^origin\/(.*)$/
+                branch = $1
               end
-              print_verbose "\n\n#{repo[:name]} -- git fetch origin && git checkout #{checkout_ref}"
-              git_pull_cmd = system_cmd("git fetch origin && git checkout #{checkout_ref}")
+              co_cmd     = 'git checkout FETCH_HEAD'
+              update_cmd = "git fetch #{repo[:git]} #{branch} && #{co_cmd}"
+              print_verbose "\n\n#{repo[:name]} -- #{update_cmd}"
+              git_pull_cmd = system_cmd(update_cmd)
             end
           end
         end
