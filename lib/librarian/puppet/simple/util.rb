@@ -10,7 +10,7 @@ module Librarian
         def forge(repo)
           # this does nothing atm
         end
-        # figure out what directory we are working out og
+        # figure out what directory we are working out of
         def base_dir
           @base_dir ||= Dir.pwd
         end
