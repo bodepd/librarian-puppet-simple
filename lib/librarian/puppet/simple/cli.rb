@@ -43,22 +43,7 @@ module Librarian
           @custom_module_path = options[:path]
           eval(File.read(File.expand_path(options[:puppetfile])))
           each_module_of_type(:git) do |repo|
-            if Dir.exists?(File.join(module_path, repo[:name]))
-              Dir.chdir(File.join(module_path, repo[:name])) do
-                remote = repo[:git]
-                # if no ref is given, assume master
-                branch = repo[:ref] || 'master'
-                if branch =~ /^origin\/(.*)$/
-                  branch = $1
-                end
-                co_cmd     = 'git checkout FETCH_HEAD'
-                update_cmd = "git fetch #{repo[:git]} #{branch} && #{co_cmd}"
-                print_verbose "\n\n#{repo[:name]} -- #{update_cmd}"
-                git_pull_cmd = system_cmd(update_cmd)
-              end
-            else
-              install_git module_path, repo[:name], repo[:git], repo[:ref]
-            end
+            install_git module_path, repo[:name], repo[:git], repo[:ref]
           end
         end
 
