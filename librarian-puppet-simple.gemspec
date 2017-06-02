@@ -22,4 +22,5 @@ Gem::Specification.new do |s|
   s.add_dependency "thor", "~> 0.15"
 
   s.add_development_dependency "rspec", "~> 2.13"
+  s.add_development_dependency "rake", "< 11.0"
 end
