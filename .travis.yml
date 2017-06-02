@@ -1,0 +1,12 @@
+---
+language: ruby
+
+rvm:
+  - 2.1.9
+
+sudo: false
+
+script: 'SPEC_OPTS="--format documentation" bundle exec rake test'
+
+notifications:
+  email: false
