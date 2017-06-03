@@ -55,7 +55,7 @@ mod "apache",
 ## Setting up for development and running the specs
 Just clone the repo and run the following commands:
 ```
-bundle exec install --path=vendor
+bundle install --path=vendor
 bundle exec rspec
 ```
 
