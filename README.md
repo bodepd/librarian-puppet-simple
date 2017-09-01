@@ -1,6 +1,6 @@
 # librarian-puppet-simple
 
-This project was created out of my frustration with dependency management in librarian-puppet, some people need external dependencies, I just need to be able to pin revisions for a collection of modules, and I found the dependency managment features of librarian-puppet too heavy for my simple use case.
+This project was created out of my frustration with dependency management in librarian-puppet, some people need external dependencies, I just need to be able to pin revisions for a collection of modules, and I found the dependency management features of librarian-puppet too heavy for my simple use case.
 
 This project just has fewer commands, but they should be compatible with the original librarian-puppet:
 
