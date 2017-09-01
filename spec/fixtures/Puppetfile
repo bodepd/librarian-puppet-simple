@@ -3,7 +3,7 @@ mod 'puppetlabs/ntp',
     :ref => '99bae40f225db0dd052efbf1d4078a21f0333331'
 
 mod 'apache',
-    :tarball => 'https://forge.puppetlabs.com/puppetlabs/apache/0.6.0.tar.gz'
+    :tarball => 'https://forge.puppet.com/v3/files/puppetlabs-apache-1.11.0.tar.gz'
 
 mod 'ghoneycutt/testlps',
   :git => 'git://github.com/ghoneycutt/testlps.git'
