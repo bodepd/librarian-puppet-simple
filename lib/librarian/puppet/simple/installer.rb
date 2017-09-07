@@ -49,11 +49,24 @@ module Librarian
           module_dir = File.join(module_path, module_name)
 
           Dir.chdir(module_path) do
-            print_verbose "cloning #{repo}"
-            system_cmd("git clone #{repo} #{module_name}")
+            unless Dir.exists?(File.join(module_path, repo))
+              print_verbose "cloning #{repo}"
+              system_cmd("git clone #{repo} #{module_name}")
+            end
             Dir.chdir(module_dir) do
-              system_cmd('git branch -r')
-              system_cmd("git checkout #{ref}") if ref
+              # if no ref is given, assume master
+              ref ||= 'master'
+              if ref =~ /^origin\/(.*)$/
+                ref = $1
+              end
+              if ref.start_with? 'refs/changes/'
+                co_cmd = 'git checkout FETCH_HEAD'
+                update_cmd = "git fetch origin #{ref} && #{co_cmd}"
+              else
+                co_cmd = "git checkout #{ref}"
+                update_cmd = "git fetch --all --tags && #{co_cmd}"
+              end
+              system_cmd(update_cmd)
             end
           end
         end
