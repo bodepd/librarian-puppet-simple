@@ -53,7 +53,10 @@ module Librarian
             system_cmd("git clone #{repo} #{module_name}")
             Dir.chdir(module_dir) do
               system_cmd('git branch -r')
-              system_cmd("git checkout #{ref}") if ref
+              if ref
+                system_cmd("git fetch origin #{ref}")
+                system_cmd('git checkout FETCH_HEAD')
+              end
             end
           end
         end
