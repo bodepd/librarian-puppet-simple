@@ -51,8 +51,8 @@ module Librarian
                 if branch =~ /^origin\/(.*)$/
                   branch = $1
                 end
-                co_cmd     = 'git checkout FETCH_HEAD'
-                update_cmd = "git fetch #{repo[:git]} #{branch} && #{co_cmd}"
+                co_cmd     = "git checkout #{branch}"
+                update_cmd = "git fetch --all && #{co_cmd}"
                 print_verbose "\n\n#{repo[:name]} -- #{update_cmd}"
                 git_pull_cmd = system_cmd(update_cmd)
               end
