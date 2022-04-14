@@ -50,8 +50,12 @@ mod "puppetlabs/ntp",
 
 mod "apache",
     :tarball => "https://forge.puppetlabs.com/puppetlabs/apache/0.6.0.tar.gz"
-```
 
+#Deploy mysql module into modules/databases/mysql with the :subdir param
+mod "mysql",
+    :git => "gitolite@myserver.com:mysql.git",
+    :subdir => "databases"
+```
 ## Setting up for development and running the specs
 Just clone the repo and run the following commands:
 ```

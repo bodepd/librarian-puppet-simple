@@ -22,9 +22,12 @@ module Librarian
         # iterator mixin
         def install!
           each_module do |repo|
-
             print_verbose "\n##### processing module #{repo[:name]}..."
-
+            module_path = module_path()
+            if repo[:subdir] 
+              module_path = File.join(module_path, repo[:subdir])
+              FileUtils.mkdir_p(module_path) unless File.exists?(module_path)
+            end
             module_dir = File.join(module_path, repo[:name])
 
             unless File.exists?(module_dir)
